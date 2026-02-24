@@ -31,6 +31,119 @@ app.get("/make-server-3424be34/health", (c) => {
   return c.json({ status: "ok" });
 });
 
+// Register a new loyalty program member with auth
+app.post("/make-server-3424be34/register", async (c) => {
+  try {
+    const body = await c.req.json();
+    const { firstName, lastName, email, phone, password } = body;
+
+    // Validate required fields
+    if (!firstName || !lastName || !email || !phone || !password) {
+      return c.json(
+        { error: "All fields are required: firstName, lastName, email, phone, password" },
+        400
+      );
+    }
+
+    // Check if user already exists in loyalty_members table
+    const { data: existingMember } = await supabase
+      .from('loyalty_members')
+      .select('*')
+      .or(`email.eq.${email},phone_number.eq.${phone}`)
+      .single();
+
+    if (existingMember) {
+      return c.json(
+        { error: "An account with this email or phone number already exists. Please use the Login page." },
+        400
+      );
+    }
+
+    // Create user with Supabase Auth using admin API to auto-confirm email
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: email,
+      password: password,
+      user_metadata: { 
+        first_name: firstName,
+        last_name: lastName,
+      },
+      // Automatically confirm the user's email since an email server hasn't been configured.
+      email_confirm: true
+    });
+
+    if (authError) {
+      console.error("Error creating auth user:", authError);
+      return c.json(
+        { error: `Failed to create user account: ${authError.message}` },
+        500
+      );
+    }
+
+    // Insert into loyalty_members table
+    const { data: memberData, error: insertError } = await supabase
+      .from('loyalty_members')
+      .insert([
+        {
+          first_name: firstName,
+          last_name: lastName,
+          email: email,
+          phone_number: phone,
+        }
+      ])
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("Error inserting member:", insertError);
+      
+      // If member insert fails, clean up the auth user
+      try {
+        await supabase.auth.admin.deleteUser(authData.user.id);
+      } catch (cleanupError) {
+        console.error("Error cleaning up auth user:", cleanupError);
+      }
+      
+      // Handle duplicate email/phone errors
+      if (insertError.code === '23505') {
+        if (insertError.message.includes('email')) {
+          return c.json({ error: "Email already registered" }, 400);
+        }
+        if (insertError.message.includes('phone')) {
+          return c.json({ error: "Phone number already registered" }, 400);
+        }
+        return c.json({ error: "Member already exists" }, 400);
+      }
+      
+      return c.json(
+        { error: `Failed to register member: ${insertError.message}` },
+        500
+      );
+    }
+
+    console.log(`Successfully registered member: ${memberData.member_number}`);
+    
+    return c.json({
+      success: true,
+      member: {
+        id: memberData.id,
+        memberNumber: memberData.member_number,
+        firstName: memberData.first_name,
+        lastName: memberData.last_name,
+        email: memberData.email,
+        phone: memberData.phone_number,
+        currentPointsBalance: memberData.current_points_balance || 0,
+        createdAt: memberData.created_at,
+      },
+    });
+  } catch (error) {
+    console.error("Error registering member:", error);
+    return c.json(
+      { error: `Failed to register member: ${error.message}` },
+      500
+    );
+  }
+});
+
 // Register a new loyalty program member
 app.post("/make-server-3424be34/register-member", async (c) => {
   try {

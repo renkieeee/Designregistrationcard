@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { projectId, publicAnonKey } from '/utils/supabase/info';
+import { supabase } from '../../utils/supabase/client';
+import { projectId, publicAnonKey } from '../../../utils/supabase/info';
 
 interface Member {
   id: string;
@@ -18,6 +19,7 @@ export function RegistrationCard() {
     lastName: '',
     email: '',
     phone: '',
+    password: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -37,45 +39,75 @@ export function RegistrationCard() {
     setRegisteredMember(null);
 
     try {
+      // Call the server endpoint to register the user
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-3424be34/register-member`,
+        `https://${projectId}.supabase.co/functions/v1/make-server-3424be34/register`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${publicAnonKey}`,
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            phone: formData.phone,
+            password: formData.password,
+          }),
         }
       );
 
-      const data = await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to register member');
+        throw new Error(result.error || 'Registration failed');
       }
 
-      setMessage({
-        type: 'success',
-        text: 'Registration successful! Welcome to our loyalty program.',
-      });
-      
-      setRegisteredMember(data.member);
-      
-      // Reset form
-      setFormData({
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-      });
-      
-      console.log('Member registered:', data.member);
+      if (result.success && result.member) {
+        setMessage({
+          type: 'success',
+          text: 'Registration successful! Welcome to our loyalty program.',
+        });
+        
+        setRegisteredMember(result.member);
+        
+        // Reset form
+        setFormData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          password: '',
+        });
+        
+        console.log('Member registered:', result.member);
+      } else {
+        throw new Error('Registration failed. Please try again.');
+      }
     } catch (error) {
       console.error('Registration error:', error);
+      
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      // Handle specific error types
+      if (error && typeof error === 'object' && 'message' in error) {
+        const errMsg = (error as { message: string }).message;
+        
+        if (errMsg.includes('already exists') || errMsg.includes('already registered')) {
+          errorMessage = 'An account with this email or phone number already exists. Please use the Login page.';
+        } else if (errMsg.includes('Email already registered')) {
+          errorMessage = 'This email address is already registered. Please use the Login page.';
+        } else if (errMsg.includes('Phone number already registered')) {
+          errorMessage = 'This phone number is already registered. Please use a different phone number.';
+        } else {
+          errorMessage = errMsg;
+        }
+      }
+      
       setMessage({
         type: 'error',
-        text: error instanceof Error ? error.message : 'Registration failed. Please try again.',
+        text: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
@@ -83,104 +115,165 @@ export function RegistrationCard() {
   };
 
   return (
-    <div className="w-full max-w-md bg-white rounded-3xl shadow-lg p-8" style={{ fontFamily: "'Poppins', sans-serif" }}>
-      <h1 className="mb-8 text-center font-semibold">
-        Loyalty Program
-      </h1>
-      
-      {message && (
-        <div
-          className={`mb-6 p-4 rounded-xl ${
-            message.type === 'success'
-              ? 'bg-green-50 text-green-800 border border-green-200'
-              : 'bg-red-50 text-red-800 border border-red-200'
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
-
-      {registeredMember && (
-        <div className="mb-6 p-5 rounded-xl bg-[#06b6d4] text-white">
-          <p className="text-sm opacity-90 mb-1">Your Member Number</p>
-          <p className="text-2xl font-semibold mb-3">
-            {registeredMember.memberNumber}
-          </p>
-          <div className="text-sm opacity-90">
-            <p>Points Balance: <span className="font-semibold">{registeredMember.currentPointsBalance}</span></p>
+    <div className="w-full bg-white rounded-3xl shadow-2xl overflow-hidden" style={{ fontFamily: "'Poppins', sans-serif" }}>
+      <div className="flex flex-col md:flex-row">
+        {/* Left Side - Branded Area */}
+        <div className="w-full md:w-2/5 bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-12 flex flex-col justify-center text-white">
+          <div className="mb-8">
+            <div className="w-16 h-16 bg-[#06b6d4] rounded-2xl flex items-center justify-center mb-6">
+              <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+              </svg>
+            </div>
+            <h2 className="text-4xl font-bold mb-4">Join Our Program</h2>
+            <p className="text-gray-300 text-lg">Create your account and start earning rewards today.</p>
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 bg-[#06b6d4] rounded-full"></div>
+              <span className="text-sm text-gray-300">Instant member number</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 bg-[#06b6d4] rounded-full"></div>
+              <span className="text-sm text-gray-300">Earn points on every purchase</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 bg-[#06b6d4] rounded-full"></div>
+              <span className="text-sm text-gray-300">Exclusive member offers</span>
+            </div>
           </div>
         </div>
-      )}
-      
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div>
-          <label htmlFor="firstName" className="block mb-2 text-gray-700">
-            First Name
-          </label>
-          <input
-            type="text"
-            id="firstName"
-            name="firstName"
-            value={formData.firstName}
-            onChange={handleChange}
-            className="w-full px-4 py-3 bg-input-background rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#06b6d4] transition-all"
-            required
-          />
-        </div>
 
-        <div>
-          <label htmlFor="lastName" className="block mb-2 text-gray-700">
-            Last Name
-          </label>
-          <input
-            type="text"
-            id="lastName"
-            name="lastName"
-            value={formData.lastName}
-            onChange={handleChange}
-            className="w-full px-4 py-3 bg-input-background rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#06b6d4] transition-all"
-            required
-          />
-        </div>
+        {/* Right Side - Registration Form */}
+        <div className="w-full md:w-3/5 p-12">
+          <h1 className="mb-2 text-3xl font-semibold text-gray-800">
+            Create Account
+          </h1>
+          <p className="mb-8 text-gray-500">Fill in your details to get started</p>
+          
+          {message && (
+            <div
+              className={`mb-6 p-4 rounded-xl ${
+                message.type === 'success'
+                  ? 'bg-green-50 text-green-800 border border-green-200'
+                  : 'bg-red-50 text-red-800 border border-red-200'
+              }`}
+            >
+              {message.text}
+            </div>
+          )}
 
-        <div>
-          <label htmlFor="email" className="block mb-2 text-gray-700">
-            Email Address
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full px-4 py-3 bg-input-background rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#06b6d4] transition-all"
-            required
-          />
-        </div>
+          {registeredMember && (
+            <div className="mb-6 p-5 rounded-xl bg-[#06b6d4] text-white">
+              <p className="text-sm opacity-90 mb-1">Your Member Number</p>
+              <p className="text-2xl font-semibold mb-3">
+                {registeredMember.memberNumber}
+              </p>
+              <div className="text-sm opacity-90">
+                <p>Points Balance: <span className="font-semibold">{registeredMember.currentPointsBalance}</span></p>
+              </div>
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Two-column grid for name fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="firstName" className="block mb-2 text-gray-700 font-medium">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  id="firstName"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#06b6d4] focus:border-transparent transition-all"
+                  placeholder="John"
+                  required
+                />
+              </div>
 
-        <div>
-          <label htmlFor="phone" className="block mb-2 text-gray-700">
-            Phone Number
-          </label>
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            className="w-full px-4 py-3 bg-input-background rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#06b6d4] transition-all"
-            required
-          />
-        </div>
+              <div>
+                <label htmlFor="lastName" className="block mb-2 text-gray-700 font-medium">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  id="lastName"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#06b6d4] focus:border-transparent transition-all"
+                  placeholder="Doe"
+                  required
+                />
+              </div>
+            </div>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-[#06b6d4] text-white py-3.5 rounded-xl hover:bg-[#0891b2] transition-colors duration-200 mt-6 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-        >
-          {isSubmitting ? 'Registering...' : 'Register Member'}
-        </button>
-      </form>
+            {/* Two-column grid for email and phone */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="email" className="block mb-2 text-gray-700 font-medium">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#06b6d4] focus:border-transparent transition-all"
+                  placeholder="your.email@example.com"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="phone" className="block mb-2 text-gray-700 font-medium">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#06b6d4] focus:border-transparent transition-all"
+                  placeholder="(555) 123-4567"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Password field - full width */}
+            <div>
+              <label htmlFor="password" className="block mb-2 text-gray-700 font-medium">
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#06b6d4] focus:border-transparent transition-all"
+                placeholder="Minimum 6 characters"
+                required
+                minLength={6}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-[#06b6d4] text-white py-3.5 rounded-xl hover:bg-[#0891b2] transition-colors duration-200 mt-6 disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-lg shadow-[#06b6d4]/20"
+            >
+              {isSubmitting ? 'Registering...' : 'Create Account'}
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
