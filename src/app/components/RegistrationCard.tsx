@@ -39,72 +39,97 @@ export function RegistrationCard() {
     setRegisteredMember(null);
 
     try {
-      // Call the server endpoint to register the user
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-3424be34/register`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${publicAnonKey}`,
+      // First, create the auth user with email confirmation disabled
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/home`,
+          data: {
+            first_name: formData.firstName,
+            last_name: formData.lastName,
           },
-          body: JSON.stringify({
-            firstName: formData.firstName,
-            lastName: formData.lastName,
+        },
+      });
+
+      if (authError) {
+        throw authError;
+      }
+
+      // Direct database insert to loyalty_members (SCRUM-47)
+      const { data: newMember, error: insertError } = await supabase
+        .from('loyalty_members')
+        .insert([
+          {
+            first_name: formData.firstName,
+            last_name: formData.lastName,
             email: formData.email,
             phone: formData.phone,
-            password: formData.password,
-          }),
-        }
-      );
+          },
+        ])
+        .select()
+        .single();
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Registration failed');
+      if (insertError) {
+        throw insertError;
       }
 
-      if (result.success && result.member) {
-        setMessage({
-          type: 'success',
-          text: 'Registration successful! Welcome to our loyalty program.',
-        });
-        
-        setRegisteredMember(result.member);
-        
-        // Reset form
-        setFormData({
-          firstName: '',
-          lastName: '',
-          email: '',
-          phone: '',
-          password: '',
-        });
-        
-        console.log('Member registered:', result.member);
-      } else {
-        throw new Error('Registration failed. Please try again.');
-      }
+      // Fetch starting points from loyalty_points table (SCRUM-47)
+      const { data: pointsData } = await supabase
+        .from('loyalty_points')
+        .select('current_balance')
+        .eq('member_id', newMember.member_id)
+        .single();
+
+      // Update state with new member data
+      setMessage({
+        type: 'success',
+        text: 'Registration successful! Welcome to our loyalty program. You can now log in.',
+      });
+
+      setRegisteredMember({
+        id: newMember.member_id,
+        memberNumber: newMember.member_number,
+        firstName: newMember.first_name,
+        lastName: newMember.last_name,
+        email: newMember.email,
+        phone: newMember.phone,
+        currentPointsBalance: pointsData?.current_balance || 50,
+        createdAt: newMember.enrollment_date,
+      });
+
+      // Reset form
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        password: '',
+      });
+
+      console.log('Member registered:', newMember);
     } catch (error) {
       console.error('Registration error:', error);
-      
+
       let errorMessage = 'Registration failed. Please try again.';
-      
+
       // Handle specific error types
       if (error && typeof error === 'object' && 'message' in error) {
         const errMsg = (error as { message: string }).message;
-        
+
         if (errMsg.includes('already exists') || errMsg.includes('already registered')) {
           errorMessage = 'An account with this email or phone number already exists. Please use the Login page.';
         } else if (errMsg.includes('Email already registered')) {
           errorMessage = 'This email address is already registered. Please use the Login page.';
         } else if (errMsg.includes('Phone number already registered')) {
           errorMessage = 'This phone number is already registered. Please use a different phone number.';
+        } else if (errMsg.includes('duplicate key')) {
+          errorMessage = 'An account with this email or phone number already exists. Please use the Login page.';
         } else {
           errorMessage = errMsg;
         }
       }
-      
+
       setMessage({
         type: 'error',
         text: errorMessage,

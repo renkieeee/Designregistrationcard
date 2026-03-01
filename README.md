@@ -1,7 +1,7 @@
 
-  # Design registration card
+  # Design Log
 
-  This is a code bundle for Design registration card. The original project is available at https://www.figma.com/design/Gp9tJFj47Xx36LdY2RUXRA/Design-registration-card.
+  This is a code bundle for Design Log. The original project is available at https://www.figma.com/design/Gp9tJFj47Xx36LdY2RUXRA/Design-Log.
 
   ## Running the code
 

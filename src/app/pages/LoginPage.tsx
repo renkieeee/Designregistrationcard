@@ -21,7 +21,14 @@ export function LoginPage() {
       });
 
       if (signInError) {
-        throw signInError;
+        // Handle email not confirmed error
+        if (signInError.message.includes('Email not confirmed')) {
+          setError('Please check your email and click the confirmation link before logging in. Check your spam folder if you don\'t see it.');
+        } else {
+          throw signInError;
+        }
+        setIsSubmitting(false);
+        return;
       }
 
       if (data?.session?.access_token) {
