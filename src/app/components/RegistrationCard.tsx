@@ -56,6 +56,7 @@ export function RegistrationCard() {
         throw authError;
       }
 
+      // SCRUM-15 (Create member registration API): Using a serverless architecture. This Supabase client-side SDK handles the direct, secure database insertion, replacing the need for a traditional Express routing layer.
       // Direct database insert to loyalty_members (SCRUM-47)
       const { data: newMember, error: insertError } = await supabase
         .from('loyalty_members')
