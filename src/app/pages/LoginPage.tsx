@@ -7,6 +7,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loginRole, setLoginRole] = useState<'customer' | 'admin'>('customer');
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,8 +34,13 @@ export function LoginPage() {
 
       if (data?.session?.access_token) {
         console.log('Login successful:', data.user);
-        // Navigate to home page on successful login
-        navigate('/home');
+        
+        // Dynamic redirection based on role
+        if (loginRole === 'customer') {
+          navigate('/home');
+        } else {
+          navigate('/admin');
+        }
       }
     } catch (err) {
       console.error('Login error:', err);
@@ -90,6 +96,48 @@ export function LoginPage() {
               )}
               
               <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Role Toggle */}
+                <div>
+                  <label className="block mb-3 text-gray-700 font-medium">
+                    Login As
+                  </label>
+                  <div className="flex gap-2 p-1 bg-gray-100 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => setLoginRole('customer')}
+                      className={`flex-1 px-4 py-3 rounded-lg font-semibold text-sm transition-all ${
+                        loginRole === 'customer'
+                          ? 'bg-white text-gray-800 shadow-md'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        Customer
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLoginRole('admin')}
+                      className={`flex-1 px-4 py-3 rounded-lg font-semibold text-sm transition-all ${
+                        loginRole === 'admin'
+                          ? 'bg-white text-gray-800 shadow-md'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Admin
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
                 <div>
                   <label htmlFor="email" className="block mb-2 text-gray-700 font-medium">
                     Email
@@ -125,18 +173,21 @@ export function LoginPage() {
                   disabled={isSubmitting}
                   className="w-full bg-[#06b6d4] text-white py-3.5 rounded-xl hover:bg-[#0891b2] transition-colors duration-200 mt-6 font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#06b6d4]/20"
                 >
-                  {isSubmitting ? 'Logging In...' : 'Log In'}
+                  {isSubmitting ? 'Logging In...' : loginRole === 'admin' ? 'Log In as Admin' : 'Log In'}
                 </button>
               </form>
 
-              <div className="mt-8 text-center">
-                <p className="text-sm text-gray-600">
-                  Don't have an account?{' '}
-                  <Link to="/register" className="text-[#06b6d4] hover:text-[#0891b2] font-semibold transition-colors">
-                    Register here
-                  </Link>
-                </p>
-              </div>
+              {/* Conditional Registration Link - Only show for customers */}
+              {loginRole === 'customer' && (
+                <div className="mt-8 text-center">
+                  <p className="text-sm text-gray-600">
+                    Don't have an account?{' '}
+                    <Link to="/register" className="text-[#06b6d4] hover:text-[#0891b2] font-semibold transition-colors">
+                      Register here
+                    </Link>
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

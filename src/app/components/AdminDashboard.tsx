@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { supabase } from '../../utils/supabase/client';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 interface Member {
   member_id: string;
@@ -356,223 +357,247 @@ export function AdminDashboard() {
             </div>
           </div>
 
-          {/* Tier Distribution Section - SCRUM-98 & 130 */}
-          <div className="bg-white rounded-2xl p-8 shadow-md mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-1">Tier Distribution</h2>
-                <p className="text-gray-600">Member segmentation by points balance</p>
-              </div>
-              <div className="flex gap-2 text-xs text-gray-500">
-                <span className="font-medium">SCRUM-98</span>
-                <span>•</span>
-                <span className="font-medium">SCRUM-130</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Gold Tier */}
-              <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-6 border-2 border-amber-200">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-800">Gold Tier</h3>
-                    <p className="text-xs text-gray-600">≥ 1,000 points</p>
-                  </div>
-                </div>
-                <p className="text-5xl font-bold text-amber-600 mb-3">{tierDistribution.gold}</p>
-                <div className="w-full bg-amber-200 rounded-full h-3 mb-2">
-                  <div
-                    className="bg-gradient-to-r from-amber-400 to-yellow-500 h-3 rounded-full transition-all duration-500"
-                    style={{ width: totalTierMembers > 0 ? `${(tierDistribution.gold / totalTierMembers) * 100}%` : '0%' }}
-                  ></div>
-                </div>
-                <p className="text-sm text-gray-600">
-                  {totalTierMembers > 0 ? Math.round((tierDistribution.gold / totalTierMembers) * 100) : 0}% of all members
-                </p>
-              </div>
-
-              {/* Silver Tier */}
-              <div className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl p-6 border-2 border-slate-300">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-slate-400 to-gray-500 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-800">Silver Tier</h3>
-                    <p className="text-xs text-gray-600">500-999 points</p>
-                  </div>
-                </div>
-                <p className="text-5xl font-bold text-slate-600 mb-3">{tierDistribution.silver}</p>
-                <div className="w-full bg-slate-300 rounded-full h-3 mb-2">
-                  <div
-                    className="bg-gradient-to-r from-slate-400 to-gray-500 h-3 rounded-full transition-all duration-500"
-                    style={{ width: totalTierMembers > 0 ? `${(tierDistribution.silver / totalTierMembers) * 100}%` : '0%' }}
-                  ></div>
-                </div>
-                <p className="text-sm text-gray-600">
-                  {totalTierMembers > 0 ? Math.round((tierDistribution.silver / totalTierMembers) * 100) : 0}% of all members
-                </p>
-              </div>
-
-              {/* Bronze Tier */}
-              <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-6 border-2 border-orange-300">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-800">Bronze Tier</h3>
-                    <p className="text-xs text-gray-600">&lt; 500 points</p>
-                  </div>
-                </div>
-                <p className="text-5xl font-bold text-orange-600 mb-3">{tierDistribution.bronze}</p>
-                <div className="w-full bg-orange-300 rounded-full h-3 mb-2">
-                  <div
-                    className="bg-gradient-to-r from-orange-500 to-amber-600 h-3 rounded-full transition-all duration-500"
-                    style={{ width: totalTierMembers > 0 ? `${(tierDistribution.bronze / totalTierMembers) * 100}%` : '0%' }}
-                  ></div>
-                </div>
-                <p className="text-sm text-gray-600">
-                  {totalTierMembers > 0 ? Math.round((tierDistribution.bronze / totalTierMembers) * 100) : 0}% of all members
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Members Table */}
-          <div className="bg-white rounded-2xl p-8 shadow-md mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Recent Members</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b-2 border-gray-200">
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Member #</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Name</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Email</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Points</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Tier</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Joined</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {members.slice(0, 10).map((member) => {
-                    const balance = member.loyalty_points?.current_balance || 0;
-                    let tier = 'Bronze';
-                    let tierColor = 'text-orange-600 bg-orange-100';
-                    if (balance >= 1000) {
-                      tier = 'Gold';
-                      tierColor = 'text-amber-600 bg-amber-100';
-                    } else if (balance >= 500) {
-                      tier = 'Silver';
-                      tierColor = 'text-slate-600 bg-slate-100';
-                    }
-
-                    return (
-                      <tr key={member.member_id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                        <td className="py-4 px-4 text-sm font-medium text-gray-800">{member.member_number}</td>
-                        <td className="py-4 px-4 text-sm text-gray-700">{member.first_name} {member.last_name}</td>
-                        <td className="py-4 px-4 text-sm text-gray-600">{member.email}</td>
-                        <td className="py-4 px-4 text-sm font-semibold text-gray-800">{balance.toLocaleString()}</td>
-                        <td className="py-4 px-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${tierColor}`}>
-                            {tier}
-                          </span>
-                        </td>
-                        <td className="py-4 px-4 text-sm text-gray-600">
-                          {new Date(member.enrollment_date).toLocaleDateString()}
-                        </td>
+          {/* Grid Layout: Tables (2/3 width) + Chart (1/3 width) */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column: Tables (2/3 width) */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Recent Members Table */}
+              <div className="bg-white rounded-2xl p-8 shadow-md">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">Recent Members</h2>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b-2 border-gray-200">
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Member #</th>
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Name</th>
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Email</th>
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Points</th>
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Tier</th>
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Joined</th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              {members.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  No members found. Register your first member to get started!
-                </div>
-              )}
-            </div>
-          </div>
+                    </thead>
+                    <tbody>
+                      {members.slice(0, 10).map((member) => {
+                        const balance = member.loyalty_points?.current_balance || 0;
+                        let tier = 'Bronze';
+                        let tierColor = 'text-orange-600 bg-orange-100';
+                        if (balance >= 1000) {
+                          tier = 'Gold';
+                          tierColor = 'text-amber-600 bg-amber-100';
+                        } else if (balance >= 500) {
+                          tier = 'Silver';
+                          tierColor = 'text-slate-600 bg-slate-100';
+                        }
 
-          {/* Member Activity Report - SCRUM-119 & SCRUM-93 */}
-          <div className="bg-white rounded-2xl p-8 shadow-md">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-1">Recent Points Activity</h2>
-                <p className="text-gray-600 flex gap-2 items-center">
-                  <span>Complete transaction history</span>
-                  <span>•</span>
-                  <span className="text-xs font-medium">SCRUM-119</span>
-                  <span>•</span>
-                  <span className="text-xs font-medium">SCRUM-93</span>
-                </p>
+                        return (
+                          <tr key={member.member_id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                            <td className="py-4 px-4 text-sm font-medium text-gray-800">{member.member_number}</td>
+                            <td className="py-4 px-4 text-sm text-gray-700">{member.first_name} {member.last_name}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{member.email}</td>
+                            <td className="py-4 px-4 text-sm font-semibold text-gray-800">{balance.toLocaleString()}</td>
+                            <td className="py-4 px-4">
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${tierColor}`}>
+                                {tier}
+                              </span>
+                            </td>
+                            <td className="py-4 px-4 text-sm text-gray-600">
+                              {new Date(member.enrollment_date).toLocaleDateString()}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  {members.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      No members found. Register your first member to get started!
+                    </div>
+                  )}
+                </div>
               </div>
-              <button
-                onClick={downloadStatement}
-                className="bg-[#06b6d4] hover:bg-[#0891b2] text-white px-6 py-3 rounded-xl font-semibold transition-colors flex items-center gap-2 shadow-lg"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Download Statement (CSV)
-              </button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b-2 border-gray-200">
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Date</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Member #</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Member Name</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Type</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Points</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.slice(0, 20).map((transaction) => {
-                    const memberNumber = transaction.loyalty_members?.member_number || 'N/A';
-                    const memberName = transaction.loyalty_members
-                      ? `${transaction.loyalty_members.first_name} ${transaction.loyalty_members.last_name}`
-                      : 'Unknown';
-                    const isEarned = transaction.transaction_type === 'EARN';
-                    const typeBadgeColor = isEarned
-                      ? 'text-green-700 bg-green-100'
-                      : 'text-orange-700 bg-orange-100';
 
-                    return (
-                      <tr key={transaction.transaction_id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                        <td className="py-4 px-4 text-sm text-gray-700">
-                          {new Date(transaction.transaction_date).toLocaleDateString()}
-                        </td>
-                        <td className="py-4 px-4 text-sm font-medium text-gray-800">{memberNumber}</td>
-                        <td className="py-4 px-4 text-sm text-gray-700">{memberName}</td>
-                        <td className="py-4 px-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${typeBadgeColor}`}>
-                            {transaction.transaction_type}
-                          </span>
-                        </td>
-                        <td className="py-4 px-4 text-sm font-semibold text-gray-800">
-                          {transaction.points.toLocaleString()}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              {transactions.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  No transactions found. Transactions will appear here once members earn or redeem points.
+              {/* Member Activity Report - SCRUM-119 & SCRUM-93 */}
+              <div className="bg-white rounded-2xl p-8 shadow-md">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-1">Recent Points Activity</h2>
+                    <p className="text-gray-600 flex gap-2 items-center">
+                      <span>Complete transaction history</span>
+                      <span>•</span>
+                      <span className="text-xs font-medium">SCRUM-119</span>
+                      <span>•</span>
+                      <span className="text-xs font-medium">SCRUM-93</span>
+                    </p>
+                  </div>
+                  <button
+                    onClick={downloadStatement}
+                    className="bg-[#06b6d4] hover:bg-[#0891b2] text-white px-6 py-3 rounded-xl font-semibold transition-colors flex items-center gap-2 shadow-lg"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Download CSV
+                  </button>
                 </div>
-              )}
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b-2 border-gray-200">
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Date</th>
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Member #</th>
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Member Name</th>
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Type</th>
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Points</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {transactions.slice(0, 20).map((transaction) => {
+                        const memberNumber = transaction.loyalty_members?.member_number || 'N/A';
+                        const memberName = transaction.loyalty_members
+                          ? `${transaction.loyalty_members.first_name} ${transaction.loyalty_members.last_name}`
+                          : 'Unknown';
+                        const isEarned = transaction.transaction_type === 'EARN';
+                        const typeBadgeColor = isEarned
+                          ? 'text-green-700 bg-green-100'
+                          : 'text-orange-700 bg-orange-100';
+
+                        return (
+                          <tr key={transaction.transaction_id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                            <td className="py-4 px-4 text-sm text-gray-700">
+                              {new Date(transaction.transaction_date).toLocaleDateString()}
+                            </td>
+                            <td className="py-4 px-4 text-sm font-medium text-gray-800">{memberNumber}</td>
+                            <td className="py-4 px-4 text-sm text-gray-700">{memberName}</td>
+                            <td className="py-4 px-4">
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${typeBadgeColor}`}>
+                                {transaction.transaction_type}
+                              </span>
+                            </td>
+                            <td className="py-4 px-4 text-sm font-semibold text-gray-800">
+                              {transaction.points.toLocaleString()}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  {transactions.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      No transactions found. Transactions will appear here once members earn or redeem points.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Rewards Summary Chart (1/3 width) */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-2xl p-8 shadow-md sticky top-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">Rewards & Member Distribution</h2>
+                
+                {totalTierMembers > 0 ? (
+                  <>
+                    <div className="h-80 mb-6">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={[
+                              { name: 'Gold', value: tierDistribution.gold, color: '#f59e0b' },
+                              { name: 'Silver', value: tierDistribution.silver, color: '#64748b' },
+                              { name: 'Bronze', value: tierDistribution.bronze, color: '#f97316' },
+                            ]}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={100}
+                            paddingAngle={5}
+                            dataKey="value"
+                          >
+                            <Cell fill="#f59e0b" />
+                            <Cell fill="#64748b" />
+                            <Cell fill="#f97316" />
+                          </Pie>
+                          <Tooltip
+                            formatter={(value: number) => [`${value} members`, '']}
+                            contentStyle={{
+                              backgroundColor: 'white',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '0.75rem',
+                              padding: '8px 12px',
+                            }}
+                          />
+                          <Legend
+                            verticalAlign="bottom"
+                            height={36}
+                            formatter={(value, entry: any) => (
+                              <span className="text-sm font-medium text-gray-700">
+                                {value} ({entry.payload.value})
+                              </span>
+                            )}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* Summary Stats */}
+                    <div className="space-y-4 pt-4 border-t border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-amber-500 rounded"></div>
+                          <span className="text-sm font-medium text-gray-700">Gold Tier</span>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-gray-800">{tierDistribution.gold}</p>
+                          <p className="text-xs text-gray-500">
+                            {totalTierMembers > 0 ? Math.round((tierDistribution.gold / totalTierMembers) * 100) : 0}%
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-slate-500 rounded"></div>
+                          <span className="text-sm font-medium text-gray-700">Silver Tier</span>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-gray-800">{tierDistribution.silver}</p>
+                          <p className="text-xs text-gray-500">
+                            {totalTierMembers > 0 ? Math.round((tierDistribution.silver / totalTierMembers) * 100) : 0}%
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-orange-500 rounded"></div>
+                          <span className="text-sm font-medium text-gray-700">Bronze Tier</span>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-gray-800">{tierDistribution.bronze}</p>
+                          <p className="text-xs text-gray-500">
+                            {totalTierMembers > 0 ? Math.round((tierDistribution.bronze / totalTierMembers) * 100) : 0}%
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="pt-4 mt-4 border-t border-gray-200">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold text-gray-700">Total Members</span>
+                          <span className="text-xl font-bold text-gray-800">{totalTierMembers}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <p className="text-sm">No data available</p>
+                    <p className="text-xs mt-1">Chart will appear when members are registered</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
