@@ -16,15 +16,31 @@ export function LoginPage() {
     setError(null);
 
     try {
+      // Authentication 'Hack': Format email based on role
+      const authEmail = loginRole === 'admin' 
+        ? `${email}@admin.loyaltyhub.com` 
+        : email;
+
+      console.log('Attempting login with:', { role: loginRole, authEmail });
+
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
+        email: authEmail,
         password,
       });
 
       if (signInError) {
+        console.error('Sign in error:', signInError);
+        
         // Handle email not confirmed error
         if (signInError.message.includes('Email not confirmed')) {
           setError('Please check your email and click the confirmation link before logging in. Check your spam folder if you don\'t see it.');
+        } else if (signInError.message.includes('Invalid login credentials')) {
+          // Provide role-specific error messages
+          if (loginRole === 'admin') {
+            setError('Invalid Admin ID or password. Please check your credentials and try again. Admin accounts must be created in Supabase with the email format: ADMINID@admin.loyaltyhub.com');
+          } else {
+            setError('Invalid email or password. Please check your credentials and try again. If you don\'t have an account, register first.');
+          }
         } else {
           throw signInError;
         }
@@ -44,7 +60,7 @@ export function LoginPage() {
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError(err instanceof Error ? err.message : 'Invalid email or password');
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -140,15 +156,15 @@ export function LoginPage() {
 
                 <div>
                   <label htmlFor="email" className="block mb-2 text-gray-700 font-medium">
-                    Email
+                    {loginRole === 'admin' ? 'Admin ID' : 'Email'}
                   </label>
                   <input
-                    type="email"
+                    type={loginRole === 'admin' ? 'text' : 'email'}
                     id="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#06b6d4] focus:border-transparent transition-all"
-                    placeholder="your.email@example.com"
+                    placeholder={loginRole === 'admin' ? 'e.g., ADMIN0001' : 'your.email@example.com'}
                     required
                   />
                 </div>
